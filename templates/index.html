@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мониторинг цен Sibdroid</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 30px; background: #f8fafc; color: #0f172a; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { margin-bottom: 24px; font-size: 26px; }
+        .card { background: #ffffff; padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 28px; border: 1px solid #e2e8f0; }
+        .card h2 { margin-top: 0; margin-bottom: 16px; font-size: 18px; color: #334155; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+        th, td { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f1f5f9; font-weight: 600; }
+        tr:hover { background: #f8fafc; }
+        a { color: #2563eb; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .price { font-weight: 700; color: #0f172a; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Samsung Galaxy (12/256 GB) — Мониторинг цен</h1>
+
+    <div class="card">
+        <h2>Динамика цен во времени</h2>
+        <canvas id="priceChart" height="110"></canvas>
+    </div>
+
+    <div class="card">
+        <h2>Текущие цены в наличии ({{ products|length }})</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Модель</th>
+                    <th>Актуальная цена</th>
+                    <th>Динамика</th>
+                    <th>Дата фиксации</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in products %}
+                <tr>
+                    <td><a href="{{ p.url }}" target="_blank">{{ p.title }}</a></td>
+                    <td class="price">{{ "{:,}".format(p.current_price).replace(',', ' ') }} ₽</td>
+                    <td>
+                        {% if p.price_diff is none or p.price_diff == 0 %}
+                            <span style="color: #64748b;">—</span>
+                        {% elif p.price_diff < 0 %}
+                            <span style="color: #16a34a; font-weight: 600;">▼ {{ "{:,}".format(p.price_diff|abs).replace(',', ' ') }} ₽</span>
+                        {% else %}
+                            <span style="color: #dc2626; font-weight: 600;">▲ +{{ "{:,}".format(p.price_diff).replace(',', ' ') }} ₽</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ p.recorded_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Безопасная передача данных из Jinja2 в чистый JSON-блок -->
+<script id="chart-labels" type="application/json">
+    {{ labels | tojson }}
+</script>
+<script id="chart-datasets" type="application/json">
+    {{ datasets | tojson }}
+</script>
+
+<script>
+    const labels = JSON.parse(document.getElementById('chart-labels').textContent);
+    const datasets = JSON.parse(document.getElementById('chart-datasets').textContent);
+
+    const ctx = document.getElementById('priceChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            // 1. Срабатывать только на конкретную линию/точку под курсором
+            interaction: {
+                mode: 'nearest',
+                axis: 'xy',
+                intersect: true
+            },
+            plugins: {
+                // 2. Отключаем перегруженную легенду сверху (товары есть в таблице под графиком)
+                legend: {
+                    display: false
+                },
+                // 3. Компактный тултип с форматированием цены
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const val = context.parsed.y;
+                            return ` ${context.dataset.label}: ${val.toLocaleString('ru-RU')} ₽`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: {
+                        callback: (value) => Number(value).toLocaleString('ru-RU') + ' ₽'
+                    }
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>
