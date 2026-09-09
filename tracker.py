@@ -1,6 +1,7 @@
 import sqlite3
 import time
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import httpx
 from bs4 import BeautifulSoup
 
@@ -135,7 +136,8 @@ def fetch_all_items():
 def scrape_and_save():
     init_db()
     items = fetch_all_items()
-    now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+    # Вместо datetime.now() используем таймзону Новосибирска
+    now_str = datetime.now(ZoneInfo("Asia/Novosibirsk")).strftime("%Y-%m-%d %H:%M")
 
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
