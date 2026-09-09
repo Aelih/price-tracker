@@ -1,11 +1,15 @@
 import sqlite3
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 DB_PATH = "tracker.db"
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return Response(status_code=204)
 
 def get_report_data():
     with sqlite3.connect(DB_PATH) as conn:
