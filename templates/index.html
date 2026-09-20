@@ -96,6 +96,43 @@
             color: #ffffff;
             border-color: #2563eb;
         }
+
+        /* Адаптивность для мобильных устройств */
+        @media (max-width: 640px) {
+            body {
+                margin: 12px;
+            }
+
+            .card {
+                padding: 14px;
+                margin-bottom: 16px;
+            }
+
+            h1 {
+                font-size: 20px;
+                margin-bottom: 16px;
+            }
+
+            th,
+            td {
+                padding: 8px 10px;
+                font-size: 13px;
+            }
+        }
+
+        /* Обертка для безопасного скролла широких таблиц */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Контейнер графика с фиксированной комфортной высотой */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 280px;
+        }
     </style>
 </head>
 
@@ -103,9 +140,9 @@
     <div class="container">
         <h1>Samsung Galaxy (12/256 GB) — Мониторинг цен</h1>
 
+        <!-- Блок графика с переключателем диапазонов -->
         <div class="card">
-            <div
-                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
                 <h2 style="margin: 0;">Динамика цен во времени</h2>
                 <div style="display: flex; gap: 6px;">
                     <button type="button" class="btn-range active" onclick="setRange(14, this)">14 дней</button>
@@ -113,50 +150,54 @@
                     <button type="button" class="btn-range" onclick="setRange('all', this)">Все время</button>
                 </div>
             </div>
-            <canvas id="priceChart" height="110"></canvas>
+            <div class="chart-container">
+                <canvas id="priceChart"></canvas>
+            </div>
         </div>
 
+        <!-- Блок таблицы товаров -->
         <div class="card">
             <h2>Текущие цены в наличии ({{ products|length }})</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Модель</th>
-                        <th>Актуальная цена</th>
-                        <th>Динамика</th>
-                        <th>Дата фиксации</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for p in products %}
-                    <tr>
-                        <td><a href="{{ p.url }}" target="_blank">{{ p.title }}</a></td>
-                        <td class="price">{{ "{:,}".format(p.current_price).replace(',', ' ') }} ₽</td>
-                        <td>
-                            {% if p.price_diff is none or p.price_diff == 0 %}
-                            <span style="color: #64748b;">—</span>
-                            {% elif p.price_diff < 0 %} <span style="color: #16a34a; font-weight: 600;">▼ {{
-                                "{:,}".format(p.price_diff|abs).replace(',', ' ') }} ₽</span>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Модель</th>
+                            <th>Актуальная цена</th>
+                            <th>Динамика</th>
+                            <th>Дата фиксации</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in products %}
+                        <tr>
+                            <td><a href="{{ p.url }}" target="_blank">{{ p.title }}</a></td>
+                            <td class="price">{{ "{:,}".format(p.current_price).replace(',', ' ') }} ₽</td>
+                            <td>
+                                {% if p.price_diff is none or p.price_diff == 0 %}
+                                <span style="color: #64748b;">—</span>
+                                {% elif p.price_diff < 0 %}
+                                <span style="color: #16a34a; font-weight: 600;">▼ {{ "{:,}".format(p.price_diff|abs).replace(',', ' ') }} ₽</span>
                                 {% else %}
-                                <span style="color: #dc2626; font-weight: 600;">▲ +{{
-                                    "{:,}".format(p.price_diff).replace(',', ' ') }} ₽</span>
+                                <span style="color: #dc2626; font-weight: 600;">▲ +{{ "{:,}".format(p.price_diff).replace(',', ' ') }} ₽</span>
                                 {% endif %}
-                        </td>
-                        <td>{{ p.recorded_at }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            </td>
+                            <td>{{ p.recorded_at }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <!-- Безопасная передача данных из Jinja2 в чистый JSON-блок -->
     <script id="chart-labels" type="application/json">
-    {{ labels | tojson }}
-</script>
+        {{ labels | tojson }}
+    </script>
     <script id="chart-datasets" type="application/json">
-    {{ datasets | tojson }}
-</script>
+        {{ datasets | tojson }}
+    </script>
 
     <script>
         // Считываем исходные полные данные из JSON-блоков
@@ -172,6 +213,16 @@
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
+                elements: {
+                    point: {
+                        radius: 2,
+                        hoverRadius: 5
+                    },
+                    line: {
+                        borderWidth: 2
+                    }
+                },
                 interaction: {
                     mode: 'nearest',
                     axis: 'xy',
@@ -222,7 +273,6 @@
 
             let startIndex = 0;
             if (days !== 'all') {
-                // 2 замера в день: N дней = N * 2 точек
                 const pointsCount = days * 2;
                 startIndex = Math.max(0, fullLabels.length - pointsCount);
             }
