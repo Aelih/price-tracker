@@ -1,118 +1,244 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мониторинг цен Sibdroid</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 30px; background: #f8fafc; color: #0f172a; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        h1 { margin-bottom: 24px; font-size: 26px; }
-        .card { background: #ffffff; padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 28px; border: 1px solid #e2e8f0; }
-        .card h2 { margin-top: 0; margin-bottom: 16px; font-size: 18px; color: #334155; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
-        th, td { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; }
-        th { background: #f1f5f9; font-weight: 600; }
-        tr:hover { background: #f8fafc; }
-        a { color: #2563eb; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        .price { font-weight: 700; color: #0f172a; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 30px;
+            background: #f8fafc;
+            color: #0f172a;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin-bottom: 24px;
+            font-size: 26px;
+        }
+
+        .card {
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin-bottom: 28px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            font-size: 18px;
+            color: #334155;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f1f5f9;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .price {
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .btn-range {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 13px;
+            cursor: pointer;
+            color: #334155;
+            transition: all 0.15s ease;
+        }
+
+        .btn-range:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-range.active {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+        }
     </style>
 </head>
+
 <body>
-<div class="container">
-    <h1>Samsung Galaxy (12/256 GB) — Мониторинг цен</h1>
+    <div class="container">
+        <h1>Samsung Galaxy (12/256 GB) — Мониторинг цен</h1>
 
-    <div class="card">
-        <h2>Динамика цен во времени</h2>
-        <canvas id="priceChart" height="110"></canvas>
-    </div>
+        <div class="card">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <h2 style="margin: 0;">Динамика цен во времени</h2>
+                <div style="display: flex; gap: 6px;">
+                    <button type="button" class="btn-range active" onclick="setRange(14, this)">14 дней</button>
+                    <button type="button" class="btn-range" onclick="setRange(30, this)">30 дней</button>
+                    <button type="button" class="btn-range" onclick="setRange('all', this)">Все время</button>
+                </div>
+            </div>
+            <canvas id="priceChart" height="110"></canvas>
+        </div>
 
-    <div class="card">
-        <h2>Текущие цены в наличии ({{ products|length }})</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Модель</th>
-                    <th>Актуальная цена</th>
-                    <th>Динамика</th>
-                    <th>Дата фиксации</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in products %}
-                <tr>
-                    <td><a href="{{ p.url }}" target="_blank">{{ p.title }}</a></td>
-                    <td class="price">{{ "{:,}".format(p.current_price).replace(',', ' ') }} ₽</td>
-                    <td>
-                        {% if p.price_diff is none or p.price_diff == 0 %}
+        <div class="card">
+            <h2>Текущие цены в наличии ({{ products|length }})</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Модель</th>
+                        <th>Актуальная цена</th>
+                        <th>Динамика</th>
+                        <th>Дата фиксации</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in products %}
+                    <tr>
+                        <td><a href="{{ p.url }}" target="_blank">{{ p.title }}</a></td>
+                        <td class="price">{{ "{:,}".format(p.current_price).replace(',', ' ') }} ₽</td>
+                        <td>
+                            {% if p.price_diff is none or p.price_diff == 0 %}
                             <span style="color: #64748b;">—</span>
-                        {% elif p.price_diff < 0 %}
-                            <span style="color: #16a34a; font-weight: 600;">▼ {{ "{:,}".format(p.price_diff|abs).replace(',', ' ') }} ₽</span>
-                        {% else %}
-                            <span style="color: #dc2626; font-weight: 600;">▲ +{{ "{:,}".format(p.price_diff).replace(',', ' ') }} ₽</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ p.recorded_at }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                            {% elif p.price_diff < 0 %} <span style="color: #16a34a; font-weight: 600;">▼ {{
+                                "{:,}".format(p.price_diff|abs).replace(',', ' ') }} ₽</span>
+                                {% else %}
+                                <span style="color: #dc2626; font-weight: 600;">▲ +{{
+                                    "{:,}".format(p.price_diff).replace(',', ' ') }} ₽</span>
+                                {% endif %}
+                        </td>
+                        <td>{{ p.recorded_at }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
 
-<!-- Безопасная передача данных из Jinja2 в чистый JSON-блок -->
-<script id="chart-labels" type="application/json">
+    <!-- Безопасная передача данных из Jinja2 в чистый JSON-блок -->
+    <script id="chart-labels" type="application/json">
     {{ labels | tojson }}
 </script>
-<script id="chart-datasets" type="application/json">
+    <script id="chart-datasets" type="application/json">
     {{ datasets | tojson }}
 </script>
 
-<script>
-    const labels = JSON.parse(document.getElementById('chart-labels').textContent);
-    const datasets = JSON.parse(document.getElementById('chart-datasets').textContent);
+    <script>
+        // Считываем исходные полные данные из JSON-блоков
+        const fullLabels = JSON.parse(document.getElementById('chart-labels').textContent);
+        const fullDatasets = JSON.parse(document.getElementById('chart-datasets').textContent);
 
-    const ctx = document.getElementById('priceChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: datasets
-        },
-        options: {
-            responsive: true,
-            // 1. Срабатывать только на конкретную линию/точку под курсором
-            interaction: {
-                mode: 'nearest',
-                axis: 'xy',
-                intersect: true
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        const priceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: []
             },
-            plugins: {
-                // 2. Отключаем перегруженную легенду сверху (товары есть в таблице под графиком)
-                legend: {
-                    display: false
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'xy',
+                    intersect: true
                 },
-                // 3. Компактный тултип с форматированием цены
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const val = context.parsed.y;
-                            return ` ${context.dataset.label}: ${val.toLocaleString('ru-RU')} ₽`;
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const val = context.parsed.y;
+                                return ` ${context.dataset.label}: ${val.toLocaleString('ru-RU')} ₽`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            autoSkip: true,
+                            maxTicksLimit: 8,
+                            maxRotation: 0,
+                            callback: function (val) {
+                                const l = this.getLabelForValue(val);
+                                if (!l) return '';
+                                const parts = l.split(' ')[0].split('-');
+                                return parts.length === 3 ? `${parts[2]}.${parts[1]}` : l;
+                            }
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            callback: (value) => Number(value).toLocaleString('ru-RU') + ' ₽'
                         }
                     }
                 }
-            },
-            scales: {
-                y: {
-                    ticks: {
-                        callback: (value) => Number(value).toLocaleString('ru-RU') + ' ₽'
-                    }
-                }
             }
+        });
+
+        // Функция переключения периода
+        function setRange(days, btnElement) {
+            if (btnElement) {
+                document.querySelectorAll('.btn-range').forEach(b => b.classList.remove('active'));
+                btnElement.classList.add('active');
+            }
+
+            let startIndex = 0;
+            if (days !== 'all') {
+                // 2 замера в день: N дней = N * 2 точек
+                const pointsCount = days * 2;
+                startIndex = Math.max(0, fullLabels.length - pointsCount);
+            }
+
+            priceChart.data.labels = fullLabels.slice(startIndex);
+            priceChart.data.datasets = fullDatasets.map(ds => ({
+                ...ds,
+                data: ds.data.slice(startIndex)
+            }));
+
+            priceChart.update();
         }
-    });
-</script>
+
+        // По умолчанию отображаем срез за последние 14 дней
+        setRange(14);
+    </script>
 </body>
+
 </html>
