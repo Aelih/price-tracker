@@ -127,11 +127,18 @@
             -webkit-overflow-scrolling: touch;
         }
 
-        /* Контейнер графика с фиксированной комфортной высотой */
+        /* По умолчанию (на ПК) график будет просторным */
         .chart-container {
             position: relative;
             width: 100%;
-            height: 280px;
+            height: 480px;
+        }
+
+        /* На мобильных возвращаем компактные 280px */
+        @media (max-width: 640px) {
+            .chart-container {
+                height: 280px;
+            }
         }
     </style>
 </head>
@@ -142,7 +149,8 @@
 
         <!-- Блок графика с переключателем диапазонов -->
         <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
                 <h2 style="margin: 0;">Динамика цен во времени</h2>
                 <div style="display: flex; gap: 6px;">
                     <button type="button" class="btn-range active" onclick="setRange(14, this)">14 дней</button>
@@ -176,11 +184,12 @@
                             <td>
                                 {% if p.price_diff is none or p.price_diff == 0 %}
                                 <span style="color: #64748b;">—</span>
-                                {% elif p.price_diff < 0 %}
-                                <span style="color: #16a34a; font-weight: 600;">▼ {{ "{:,}".format(p.price_diff|abs).replace(',', ' ') }} ₽</span>
-                                {% else %}
-                                <span style="color: #dc2626; font-weight: 600;">▲ +{{ "{:,}".format(p.price_diff).replace(',', ' ') }} ₽</span>
-                                {% endif %}
+                                {% elif p.price_diff < 0 %} <span style="color: #16a34a; font-weight: 600;">▼ {{
+                                    "{:,}".format(p.price_diff|abs).replace(',', ' ') }} ₽</span>
+                                    {% else %}
+                                    <span style="color: #dc2626; font-weight: 600;">▲ +{{
+                                        "{:,}".format(p.price_diff).replace(',', ' ') }} ₽</span>
+                                    {% endif %}
                             </td>
                             <td>{{ p.recorded_at }}</td>
                         </tr>
@@ -257,6 +266,7 @@
                     },
                     y: {
                         ticks: {
+                            stepSize: 2500,
                             callback: (value) => Number(value).toLocaleString('ru-RU') + ' ₽'
                         }
                     }
