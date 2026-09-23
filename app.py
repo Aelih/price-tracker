@@ -16,31 +16,27 @@ def get_report_data():
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        # Выбираем товары вместе с предыдущей ценой через оконную функцию LAG
+        # Получение товаров, зафиксированных строго во время последнего прогона парсера
         products = cursor.execute("""
-            WITH RankedPrices AS (
+            WITH LatestRun AS (
+                SELECT MAX(recorded_at) as max_date FROM price_history
+            ),
+            RankedPrices AS (
                 SELECT 
-                    p.id,
-                    p.title,
-                    p.url,
-                    h.price,
-                    h.recorded_at,
+                    p.id, p.title, p.url, h.price, h.recorded_at,
                     LAG(h.price) OVER (PARTITION BY p.id ORDER BY h.recorded_at ASC) as prev_price,
                     ROW_NUMBER() OVER (PARTITION BY p.id ORDER BY h.recorded_at DESC) as rn
                 FROM products p
                 JOIN price_history h ON h.product_id = p.id
             )
             SELECT 
-                id, 
-                title, 
-                url, 
-                price as current_price, 
-                prev_price, 
-                (price - prev_price) as price_diff,
-                recorded_at
-            FROM RankedPrices
-            WHERE rn = 1
-            ORDER BY current_price DESC
+                r.title, r.url, r.price as current_price,
+                (r.price - r.prev_price) as price_diff,
+                r.recorded_at
+            FROM RankedPrices r
+            JOIN LatestRun lr ON r.recorded_at = lr.max_date
+            WHERE r.rn = 1
+            ORDER BY current_price DESC;
         """).fetchall()
 
         history = cursor.execute("""
