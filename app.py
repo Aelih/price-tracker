@@ -30,6 +30,7 @@ def get_report_data():
                 JOIN price_history h ON h.product_id = p.id
             )
             SELECT 
+                r.id,
                 r.title, r.url, r.price as current_price,
                 (r.price - r.prev_price) as price_diff,
                 r.recorded_at
